@@ -6,9 +6,9 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <link rel="manifest" href="manifest.json">
 
-<!-- Fabric.js for canvas editing -->
+<!-- Fabric.js -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-<!-- QR code generator -->
+<!-- QR code -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
 
 <style>
@@ -174,6 +174,7 @@
     display:flex;
     justify-content:space-between;
     gap:8px;
+    flex-wrap:wrap;
   }
 
   /* Payment modal */
@@ -218,6 +219,8 @@
     display:flex;
     justify-content:space-between;
     align-items:center;
+    gap:8px;
+    flex-wrap:wrap;
   }
 </style>
 </head>
@@ -231,7 +234,7 @@
 </header>
 
 <main>
-  <!-- Left: canvas -->
+  <!-- Left: canvas + Pexels -->
   <section id="left">
     <div class="block">
       <div class="section-title">Background</div>
@@ -299,6 +302,10 @@
         <input type="range" id="lineHeight" min="0.9" max="2.4" step="0.05" value="1.15">
       </div>
       <div class="row">
+        <label>Text</label>
+        <input type="text" id="textContent" placeholder="Select a text box to edit">
+      </div>
+      <div class="row">
         <label>Link URL</label>
         <input type="text" id="linkUrl" placeholder="https://example.com (optional)">
       </div>
@@ -331,40 +338,45 @@
         <button id="previewBtn">Low‑res preview (free)</button>
         <button id="exportBtn" class="primary">High‑res via Stripe</button>
       </div>
+      <div class="row">
+        <button id="goHost" style="display:none;">Continue to hosting →</button>
+      </div>
     </div>
   </section>
 </main>
 
 <footer>
   <span>Upload this folder to GitHub Pages / Cloudflare Pages / Netlify – it works as a static app.</span>
-  <span>Pexels images are royalty‑free for personal and commercial use (respect their license).</span>
+  <span id="footerRight">
+    Made with Weeb
+  </span>
 </footer>
 
 <!-- Payment modal -->
 <div id="payModal">
   <div id="payCard">
     <h2>Unlock high‑res export</h2>
-    <p>One‑time payment via Stripe to download a 2× resolution PNG, no watermark. Ideal for your site or banner.</p>
-    <div id="payPrice">5 EUR</div>
-    <p>After payment, return here and click “High‑res via Stripe” again to download.</p>
+    <p>One‑time payment via Stripe to download a 2× resolution PNG, no watermark.</p>
+    <div id="payPrice">5 EUR (test mode)</div>
+    <p>After payment, come back here; if you set redirect to ?paid=1 we auto‑unlock high‑res.</p>
 
     <p style="margin:8px 0;">
       <a href="https://buy.stripe.com/test_cNi00cbf55gHasgcCHbEA00"
          target="_blank"
          style="display:inline-block;padding:8px 18px;border-radius:999px;background:#6366f1;color:#f9fafb;text-decoration:none;font-size:13px;font-weight:600;">
-        Pay with Stripe (test)
+        Pay with Stripe
       </a>
     </p>
 
     <div id="payFooter">
-      <span>Test mode: card 4242 4242 4242 4242, any future date/CVC.</span>
+      <span>Stripe test card: 4242 4242 4242 4242, any future date/CVC.</span>
       <button id="payClose">Close</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ===== BASIC SETUP ===== */
+/* ===== Canvas setup ===== */
 const canvas = new fabric.Canvas('c',{preserveObjectStacking:true});
 let bgImg   = null;
 let active  = null;
@@ -383,7 +395,7 @@ function resizeCanvas(){
 window.addEventListener('resize',resizeCanvas);
 resizeCanvas();
 
-/* ===== BACKGROUND: UPLOAD + FIT ===== */
+/* ===== Background: upload + fit ===== */
 document.getElementById('bgUpload').onchange = e => {
   const file = e.target.files[0];
   if (!file) return;
@@ -414,7 +426,7 @@ document.getElementById('clearAll').onclick = ()=>{
   canvas.clear(); bgImg = null;
 };
 
-/* ===== TEXT TOOLS ===== */
+/* ===== Text tools ===== */
 function applyTextProps(obj){
   obj.set({
     fontFamily: document.getElementById('fontSelect').value,
@@ -460,18 +472,34 @@ document.getElementById('addSubline').onclick = () =>
     });
   });
 
-canvas.on('selection:created',e=>{ active = e.target; syncLinkField(); });
-canvas.on('selection:updated',e=>{ active = e.target; syncLinkField(); });
-canvas.on('selection:cleared', ()=>{ active = null; syncLinkField(); });
+function syncTextField(){
+  const input = document.getElementById('textContent');
+  if (active && active.type === 'textbox') {
+    input.value = active.text;
+  } else {
+    input.value = '';
+  }
+}
 
 function syncLinkField(){
   const input = document.getElementById('linkUrl');
-  if (active && active.type==='textbox' && active.linkUrl){
+  if (active && active.type === 'textbox' && active.linkUrl){
     input.value = active.linkUrl;
   } else {
     input.value = '';
   }
 }
+
+canvas.on('selection:created',e=>{ active = e.target; syncTextField(); syncLinkField(); });
+canvas.on('selection:updated',e=>{ active = e.target; syncTextField(); syncLinkField(); });
+canvas.on('selection:cleared', ()=>{ active = null; syncTextField(); syncLinkField(); });
+
+document.getElementById('textContent').addEventListener('input',e=>{
+  if (!active || active.type!=='textbox') return;
+  active.text = e.target.value;
+  canvas.requestRenderAll();
+});
+
 document.getElementById('linkUrl').addEventListener('change',e=>{
   if (!active || active.type!=='textbox') return;
   active.linkUrl = e.target.value.trim();
@@ -494,7 +522,7 @@ document.getElementById('deleteSelected').onclick = ()=>{
   if (o){ canvas.remove(o); canvas.requestRenderAll(); }
 };
 
-/* ===== EXTRA IMAGES ===== */
+/* ===== Extra images ===== */
 document.getElementById('imgUpload').onchange = e=>{
   const file = e.target.files[0];
   if (!file) return;
@@ -525,43 +553,48 @@ document.getElementById('addQr').onclick = ()=>{
   },{crossOrigin:'anonymous'});
 };
 
-/* ===== PEXELS SEARCH (DEV MODE – KEY EXPOSED) ===== */
-const PEXELS_KEY = '95bCoSxNk9SYMaXg7IZmRIhMIzv1LdgEdmSXXpMhjeIrtDX33VUhDcZY'; // visible, dev only
-// Production: move this behind a proxy and do Authorization header server-side [web:200][web:201][web:206]
+/* ===== PEXELS SEARCH (dev mode) ===== */
+const PEXELS_KEY = '95bCoSxNk9SYMaXg7IZmRIhMIzv1LdgEdmSXXpMhjeIrtDX33VUhDcZY'; // visible: dev only
 
-document.getElementById('pexelsSearch').onclick = async ()=>{
-  const query = document.getElementById('pexelsQuery').value.trim() || 'landscape';
+async function fetchPexelsPhotos(query){
   const grid  = document.getElementById('pexelsGrid');
   grid.innerHTML = '<span style="font-size:11px;color:#9ca3af;">Searching Pexels…</span>';
-
   try {
     const res = await fetch(`https://api.pexels.com/v1/search?per_page=12&query=${encodeURIComponent(query)}`,{
       headers:{ Authorization: PEXELS_KEY }
     });
     if (!res.ok) throw new Error('Pexels error');
     const data = await res.json();
-    if (!data.photos || !data.photos.length){
-      grid.innerHTML = '<span style="font-size:11px;color:#9ca3af;">No results.</span>';
-      return;
-    }
-    grid.innerHTML = '';
-    data.photos.forEach(photo=>{
-      const thumb = photo.src.small || photo.src.medium || photo.src.original;
-      const full  = photo.src.large2x || photo.src.large || photo.src.original;
-      const imgEl = document.createElement('img');
-      imgEl.src = thumb;
-      imgEl.title = 'Set as background';
-      imgEl.onclick = ()=>{
-        fabric.Image.fromURL(full,img=>{
-          bgImg = img; fitBackground();
-        },{crossOrigin:'anonymous'});
-      };
-      grid.appendChild(imgEl);
-    });
+    return data.photos || [];
   } catch(e){
     console.error(e);
     grid.innerHTML = '<span style="font-size:11px;color:#f97373;">Pexels request failed.</span>';
+    return [];
   }
+}
+
+document.getElementById('pexelsSearch').onclick = async ()=>{
+  const query = document.getElementById('pexelsQuery').value.trim() || 'landscape';
+  const grid  = document.getElementById('pexelsGrid');
+  const photos = await fetchPexelsPhotos(query);
+  if (!photos.length){
+    grid.innerHTML = '<span style="font-size:11px;color:#9ca3af;">No results.</span>';
+    return;
+  }
+  grid.innerHTML = '';
+  photos.forEach(photo=>{
+    const thumb = photo.src.small || photo.src.medium || photo.src.original;
+    const full  = photo.src.large2x || photo.src.large || photo.src.original;
+    const imgEl = document.createElement('img');
+    imgEl.src = thumb;
+    imgEl.title = 'Set as background';
+    imgEl.onclick = ()=>{
+      fabric.Image.fromURL(full,img=>{
+        bgImg = img; fitBackground();
+      },{crossOrigin:'anonymous'});
+    };
+    grid.appendChild(imgEl);
+  });
 };
 
 /* ===== EXPORT ===== */
@@ -585,21 +618,47 @@ document.getElementById('exportBtn').onclick = ()=>{
   }
 };
 
-/* ===== STRIPE MODAL (honor system) ===== */
+/* ===== STRIPE MODAL ===== */
 document.getElementById('payClose').onclick = ()=>{
   document.getElementById('payModal').style.display='none';
-  // For dev/demo, you can auto-unlock here:
-  // hiResUnlocked = true;
 };
 
-// If you configure Stripe redirect to ?paid=1 on success, auto-unlock:
+// If Stripe redirect is set to ?paid=1, auto-unlock hi-res:
 const params = new URLSearchParams(window.location.search);
 if (params.get('paid') === '1'){
   hiResUnlocked = true;
-  document.getElementById('payModal').style.display='none';
 }
 
-/* ===== PWA SW ===== */
+/* ===== HOSTING BUTTON UI ===== */
+function updateHostingUI(){
+  const btn = document.getElementById('goHost');
+  btn.style.display = hiResUnlocked ? 'inline-block' : 'none';
+}
+updateHostingUI();
+
+document.getElementById('goHost').onclick = ()=>{
+  window.location.href = 'host.html';
+};
+
+/* ===== FOOTER SHARE ===== */
+(function(){
+  const footerRight = document.getElementById('footerRight');
+  if (navigator.share){
+    const shareBtn = document.createElement('button');
+    shareBtn.textContent = 'Share app';
+    shareBtn.style.marginLeft = '8px';
+    shareBtn.onclick = ()=>{
+      navigator.share({
+        title:'Weeb – One‑Screen Site Maker',
+        text:'Make a simple one‑screen hero for your site in minutes.',
+        url:window.location.href
+      }).catch(()=>{});
+    };
+    footerRight.appendChild(shareBtn);
+  }
+})();
+
+/* ===== PWA SW (optional) ===== */
 if ('serviceWorker' in navigator){
   navigator.serviceWorker.register('./sw.js').catch(()=>{});
 }
