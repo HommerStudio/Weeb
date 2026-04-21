@@ -1,180 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Photo‑Text Editor</title>
-<link rel="manifest" href="manifest.json">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<style>
-  body{margin:0;font-family:sans-serif;display:flex;height:100vh;flex-direction:column;}
-  #top{display:flex;gap:8px;padding:8px;background:#eee;flex-wrap:wrap;}
-  #canvas-container{flex:1;position:relative;overflow:hidden;}
-  #c{border:1px solid #ccc;touch-action:none;background:#fafafa;}
-  .ctrl{margin-bottom:4px;}
-  #payModal{display:none;position:fixed;inset:0;background:rgba(0,0,0,0.6);
-            align-items:center;justify-content:center;z-index:1000;}
-  #payModal.content{background:white;padding:20px;border-radius:8px;max-width:90%;width:300px;}
-</style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>One-Screen Website Maker</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
+        header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
+        .editor { margin: 20px; padding: 20px; border: 1px solid #ccc; }
+        .editor textarea { width: 100%; height: 200px; }
+        .editor button { display: block; margin-top: 10px; }
+    </style>
 </head>
 <body>
-<div id="top">
-  <input type="file" id="imgUpload" accept="image/*" class="ctrl">
-  <label>Font: <select id="fontSelect" class="ctrl">
-    <option value="Arial">Arial</option>
-    <option value="'Courier New'">Courier New</option>
-    <option value="'Comic Sans MS'">Comic Sans</option>
-    <option value="'Impact'">Impact</option>
-    <option value="'Georgia'">Georgia</option>
-  </select></label>
-  <label>Size: <input type="range" id="fontSize" min="10" max="200" value="48" class="ctrl"></label>
-  <label>Color: <input type="color" id="fontColor" value="#000000" class="ctrl"></label>
-  <label>Align:
-    <select id="textAlign" class="ctrl">
-      <option value="left">Left</option>
-      <option value="center">Center</option>
-      <option value="right">Right</option>
-      <option value="justify">Justify</option>
-    </select>
-  </label>
-  <label>Line‑height: <input type="range" id="lineHeight" min="0.8" max="3" step="0.05" value="1.2" class="ctrl"></label>
-  <label>Letter‑spacing: <input type="range" id="letterSpace" min="-2" max="10" step="0.1" value="0" class="ctrl"></label>
-  <button id="addTxt" class="ctrl">Add Text</button>
-  <button id="delTxt" class="ctrl">Delete Selected</button>
-  <button id="expBtn" class="ctrl">Export PNG</button>
-</div>
+    <header>
+        <h1>One-Screen Website Maker</h1>
+    </header>
+    <div class="editor">
+        <h2>Edit Your Website</h2>
+        <textarea id="htmlContent" placeholder="Enter HTML code..."></textarea>
+        <button onclick="generatePreview()">Generate Preview</button>
+        <button onclick="saveWebsite()">Save Website</button>
+        <h3>Preview:</h3>
+        <iframe id="previewFrame" style="width:100%; height:300px;"></iframe>
+    </div>
+    <script>
+        function generatePreview() {
+            const htmlContent = document.getElementById('htmlContent').value;
+            const previewFrame = document.getElementById('previewFrame');
+            previewFrame.srcdoc = htmlContent;
+        }
 
-<div id="canvas-container"><canvas id="c" width="1000" height="700"></canvas></div>
-
-<!-- Payment modal (PayPal Buy Now) -->
-<div id="payModal">
-  <div class="content">
-    <h3>Pay $5 to unlock download</h3>
-    <!-- PayPal Buy Now button (replace with your business email) -->
-    <form action="https://www.paypal.com/cgi-bin/webscr" method="post" target="_top">
-      <input type="hidden" name="cmd" value="_s-xclick">
-      <input type="hidden" name="hosted_button_id" value="YOUR_BUTTON_ID">
-      <input type="image" src="https://www.paypalobjects.com/en_US/i/btn/btn_buynowCC_LG.gif"
-               border="0" name="submit" alt="PayPal – The safer, easier way to pay online!">
-      <img alt="" border="0" src="https://www.paypalobjects.com/en_US/i/scr/pixel.gif" width="1" height="1">
-    </form>
-    <p>After payment, close this window and click “Download PNG” again.</p>
-    <button id="closePay">Close</button>
-  </div>
-</div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
-<script>
-/* ----- Fabric.js editor (same as before) ----- */
-const canvas = new fabric.Canvas('c');
-let activeObj = null;
-
-// Image upload
-document.getElementById('imgUpload').onchange = e=>{
-  const file = e.target.files[0];
-  if(!file) return;
-  const url = URL.createObjectURL(file);
-  fabric.Image.fromURL(url, img=>{
-    const scale = Math.min(canvas.width/img.width, canvas.height/img.height);
-    img.scale(scale);
-    img.set({
-      left:(canvas.width-img.width*scale)/2,
-      top:(canvas.height-img.height*scale)/2,
-      selectable:false
-    });
-    canvas.add(img);
-    canvas.sendToBack(img);
-    canvas.requestRenderAll();
-  });
-};
-
-// Textbox helpers
-function applyTextboxProps(tb){
-  tb.set({
-    fontFamily: document.getElementById('fontSelect').value,
-    fontSize: parseInt(document.getElementById('fontSize').value),
-    fill: document.getElementById('fontColor').value,
-    textAlign: document.getElementById('textAlign').value,
-    lineHeight: parseFloat(document.getElementById('lineHeight').value),
-    charSpacing: parseFloat(document.getElementById('letterSpace').value),
-    editable:true,
-    borderColor:'#26a0da',
-    cornerColor:'#ffb400',
-    cornerSize:8,
-    transparentCorners:false,
-    hasRotatingPoint:true
-  });
-}
-document.getElementById('addTxt').onclick = ()=>{
-  const tb = new fabric.Textbox('Double‑click to edit',{width:300,left:50,top:50});
-  applyTextboxProps(tb);
-  canvas.add(tb);
-  canvas.setActiveObject(tb);
-  tb.enterEditing();
-  canvas.requestRenderAll();
-};
-const syncProps = ()=>{
-  if(!activeObj || activeObj.type!=='textbox') return;
-  activeObj.set({
-    fontFamily: document.getElementById('fontSelect').value,
-    fontSize: parseInt(document.getElementById('fontSize').value),
-    fill: document.getElementById('fontColor').value,
-    textAlign: document.getElementById('textAlign').value,
-    lineHeight: parseFloat(document.getElementById('lineHeight').value),
-    charSpacing: parseFloat(document.getElementById('letterSpace').value)
-  });
-  canvas.requestRenderAll();
-};
-['fontSelect','fontSize','fontColor','textAlign','lineHeight','letterSpace'].forEach(id=>{
-  document.getElementById(id).onchange = syncProps;
-});
-canvas.on('selection:created', e=>{
-  activeObj = e.target;
-  if(activeObj && activeObj.type==='textbox'){
-    document.getElementById('fontSelect').value = activeObj.fontFamily;
-    document.getElementById('fontSize').value = activeObj.fontSize;
-    document.getElementById('fontColor').value = activeObj.fill;
-    document.getElementById('textAlign').value = activeObj.textAlign;
-    document.getElementById('lineHeight').value = activeObj.lineHeight;
-    document.getElementById('letterSpace').value = activeObj.charSpacing;
-  }else activeObj=null;
-});
-canvas.on('selection:cleared',()=>{ activeObj=null; });
-document.getElementById('delTxt').onclick = ()=>{
-  const act = canvas.getActiveObject();
-  if(act){ canvas.remove(act); canvas.requestRenderAll(); }
-};
-
-// Export flow with payment gate
-let paymentDone = false;
-document.getElementById('expBtn').onclick = ()=>{
-  if(paymentDone){
-    const link = document.createElement('a');
-    link.download = 'my‑creation.png';
-    link.href = canvas.toDataURL({format:'png', multiplier:2});
-    link.click();
-  }else{
-    document.getElementById('payModal').style.display = 'flex';
-  }
-};
-document.getElementById('closePay').onclick = ()=>{
-  document.getElementById('payModal').style.display = 'none';
-};
-// Simple stub: when PayPal redirects back (return URL) we could set paymentDone=true.
-// For a no‑code solution we rely on the user manually closing the modal after paying.
-// If you prefer Stripe, replace the PayPal form with a Stripe Payment Link button:
-//   <a href="https://buy.stripe.com/test_XXXXXX" target="_blank" class="stripe-button">Pay $5</a>
-// and set paymentDone=true after the user closes the modal (honor system) or after a redirect.
-
-// ----- Keep canvas size responsive -----
-function resizeCanvas(){
-  const w = window.innerWidth;
-  const h = window.innerHeight * 0.75; // leave space for controls
-  canvas.setWidth(w);
-  canvas.setHeight(h);
-  canvas.requestRenderAll();
-}
-window.addEventListener('resize', resizeCanvas);
-resizeCanvas();
-</script>
+        function saveWebsite() {
+            // Logic for saving the website goes here (e.g., payment integration)
+            alert('Website saved! Payment processing would go here.');
+        }
+    </script>
 </body>
 </html>
