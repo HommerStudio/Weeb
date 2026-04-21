@@ -1,40 +1,9 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>One-Screen Website Maker</title>
-    <style>
-        body { font-family: Arial, sans-serif; margin: 0; padding: 0; }
-        header { background: #4CAF50; color: white; padding: 10px; text-align: center; }
-        .editor { margin: 20px; padding: 20px; border: 1px solid #ccc; }
-        .editor textarea { width: 100%; height: 200px; }
-        .editor button { display: block; margin-top: 10px; }
-    </style>
+    <title>One-Shot Web Poster Maker</title>
 </head>
 <body>
-    <header>
-        <h1>One-Screen Website Maker</h1>
-    </header>
-    <div class="editor">
-        <h2>Edit Your Website</h2>
-        <textarea id="htmlContent" placeholder="Enter HTML code..."></textarea>
-        <button onclick="generatePreview()">Generate Preview</button>
-        <button onclick="saveWebsite()">Save Website</button>
-        <h3>Preview:</h3>
-        <iframe id="previewFrame" style="width:100%; height:300px;"></iframe>
-    </div>
-    <script>
-        function generatePreview() {
-            const htmlContent = document.getElementById('htmlContent').value;
-            const previewFrame = document.getElementById('previewFrame');
-            previewFrame.srcdoc = htmlContent;
-        }
-
-        function saveWebsite() {
-            // Logic for saving the website goes here (e.g., payment integration)
-            alert('Website saved! Payment processing would go here.');
-        }
-    </script>
+    <h1>Welcome to the One-Shot Web Poster Maker!</h1>
+    <p>Create stunning posters in just a few clicks!</p>
 </body>
 </html>
