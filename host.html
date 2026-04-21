@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Weeb · Host your mini‑site</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+  body {
+    margin:0;
+    font-family:system-ui,-apple-system,"Segoe UI",sans-serif;
+    background:#020617;
+    color:#e5e7eb;
+    display:flex;
+    flex-direction:column;
+    min-height:100vh;
+  }
+  header, footer {
+    padding:8px 12px;
+    background:#0f172a;
+    font-size:13px;
+  }
+  main {
+    flex:1;
+    padding:12px;
+    max-width:600px;
+    margin:0 auto;
+  }
+  h1 { margin:0 0 6px;font-size:18px; }
+  p { font-size:12px;color:#9ca3af; }
+  .block {
+    background:#020617;
+    border-radius:8px;
+    border:1px solid #111827;
+    padding:10px;
+    margin-top:8px;
+  }
+  .row {
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    margin-bottom:8px;
+  }
+  label {
+    font-size:11px;
+    color:#9ca3af;
+  }
+  input[type="file"],
+  input[type="text"],
+  textarea {
+    font-size:12px;
+    padding:6px;
+    border-radius:6px;
+    border:1px solid #111827;
+    background:#020617;
+    color:#e5e7eb;
+  }
+  button {
+    border-radius:999px;
+    border:1px solid #1f2937;
+    background:#111827;
+    color:#e5e7eb;
+    font-size:12px;
+    padding:7px 12px;
+    cursor:pointer;
+  }
+  button.primary {
+    background:#4f46e5;
+    border-color:#6366f1;
+  }
+</style>
+</head>
+<body>
+<header>
+  <div>Weeb · Step 2 · Host your mini‑site</div>
+</header>
+
+<main>
+  <h1>Send us your hero image</h1>
+  <p>
+    Upload the PNG you exported from Weeb and choose a short name for your mini‑site.
+    We’ll host it on our GitHub Pages / static infra and send you the live URL.
+  </p>
+
+  <div class="block">
+    <div class="row">
+      <label for="siteName">Preferred site name (subpath)</label>
+      <input type="text" id="siteName" placeholder="e.g. my‑name">
+    </div>
+
+    <div class="row">
+      <label for="heroFile">Upload your exported PNG</label>
+      <input type="file" id="heroFile" accept="image/png,image/jpeg">
+    </div>
+
+    <div class="row">
+      <label for="contact">Your contact (email or Telegram)</label>
+      <input type="text" id="contact" placeholder="[email protected]">
+    </div>
+
+    <div class="row">
+      <label for="notes">Notes / CTA text you want on the site (optional)</label>
+      <textarea id="notes" rows="3" placeholder="Tell us what button/link should do."></textarea>
+    </div>
+
+    <button id="sendBtn" class="primary">Send request</button>
+    <p id="status" style="font-size:11px;color:#9ca3af;margin-top:6px;"></p>
+  </div>
+
+  <div class="block" style="margin-top:10px;">
+    <p style="margin:0;">
+      For now, we manually review and deploy each mini‑site. In the next version this will
+      be automated so your site goes live in seconds.
+    </p>
+  </div>
+</main>
+
+<footer>
+  <span>Step 1: pay · Step 2: upload · Step 3: we host.</span>
+</footer>
+
+<script>
+// For now, just pack everything into a mailto link until you add backend.
+document.getElementById('sendBtn').onclick = () => {
+  const name = document.getElementById('siteName').value.trim();
+  const contact = document.getElementById('contact').value.trim();
+  const notes = document.getElementById('notes').value.trim();
+  const fileInput = document.getElementById('heroFile');
+
+  if (!name || !contact || !fileInput.files.length) {
+    document.getElementById('status').textContent = 'Fill name, contact, and choose a PNG first.';
+    return;
+  }
+
+  document.getElementById('status').textContent =
+    'Please attach the PNG manually in your email client – we will automate this later.';
+
+  const subject = encodeURIComponent('Weeb hosting request: ' + name);
+  const body = encodeURIComponent(
+    'Name: ' + name + '\
+' +
+    'Contact: ' + contact + '\
+' +
+    'Notes: ' + notes + '\
+' +
+    '(Please see attached PNG.)'
+  );
+
+  window.location.href = 'mailto:[email protected]?subject=' + subject + '&body=' + body;
+};
+</script>
+</body>
+</html>
