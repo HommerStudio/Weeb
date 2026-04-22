@@ -10,9 +10,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/fabric.js/5.3.0/fabric.min.js"></script>
 <!-- QR code -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrious/4.0.2/qrious.min.js"></script>
-<!-- JSZip + FileSaver for client-side zip export (demo) -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.0/jszip.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
 <style>
   :root {
@@ -94,124 +91,113 @@
     box-shadow: 0 6px 30px rgba(2,6,23,0.7) inset;
   }
 
-  .section-title { font-size:12px; font-weight:600; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.08em; margin-bottom:6px; }
-  .block { background:#020617; border-radius:8px; border:1px solid #111827; padding:8px; margin-bottom:8px; }
-  .row { display:flex; align-items:center; gap:8px; margin-bottom:6px; }
-  .row label { font-size:12px; color:var(--text-muted); min-width:70px; }
-  .row input[type="file"], .row input[type="text"], .row input[type="color"], .row input[type="range"], .row select {
-    flex:1; font-size:13px; padding:6px 8px; border-radius:8px; border:1px solid #111827; background:#020617; color:var(--text-main);
+  .section-title {
+    font-size:12px;
+    font-weight:600;
+    color:var(--text-muted);
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    margin-bottom:6px;
   }
-  button { border-radius:999px; border:1px solid #1f2937; background:#111827; color:#e5e7eb; font-size:13px; padding:8px 12px; cursor:pointer; }
-  button.primary { background:linear-gradient(135deg,var(--accent),var(--accent-strong)); border-color:var(--accent-strong); color:#f9fafb; font-weight:600; }
+  .block {
+    background:#020617;
+    border-radius:8px;
+    border:1px solid #111827;
+    padding:8px;
+    margin-bottom:8px;
+  }
+  .row {
+    display:flex;
+    align-items:center;
+    gap:8px;
+    margin-bottom:6px;
+  }
+  .row label {
+    font-size:12px;
+    color:var(--text-muted);
+    min-width:70px;
+  }
+  .row input[type="file"],
+  .row input[type="text"],
+  .row input[type="color"],
+  .row input[type="range"],
+  .row select {
+    flex:1;
+    font-size:13px;
+    padding:6px 8px;
+    border-radius:8px;
+    border:1px solid #111827;
+    background:#020617;
+    color:var(--text-main);
+  }
+  button {
+    border-radius:999px;
+    border:1px solid #1f2937;
+    background:#111827;
+    color:#e5e7eb;
+    font-size:13px;
+    padding:8px 12px;
+    cursor:pointer;
+  }
+  button.primary {
+    background:linear-gradient(135deg,var(--accent),var(--accent-strong));
+    border-color:var(--accent-strong);
+    color:#f9fafb;
+    font-weight:600;
+  }
   button.danger { border-color:#b91c1c; background:#7f1d1d; }
 
-  #pexelsGrid { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:6px; max-height:180px; overflow:auto; margin-top:6px; }
-  #pexelsGrid img { width:100%; border-radius:6px; cursor:pointer; display:block; }
+  #pexelsGrid {
+    display:grid;
+    grid-template-columns:repeat(3,minmax(0,1fr));
+    gap:6px;
+    max-height:180px;
+    overflow:auto;
+    margin-top:6px;
+  }
+  #pexelsGrid img {
+    width:100%;
+    border-radius:6px;
+    cursor:pointer;
+    display:block;
+  }
 
-  footer { padding:8px 12px; font-size:12px; color:var(--text-muted); border-top:1px solid var(--border); background:#020617; display:flex; justify-content:space-between; gap:8px; flex-wrap:wrap; }
+  footer {
+    padding:8px 12px;
+    font-size:12px;
+    color:var(--text-muted);
+    border-top:1px solid var(--border);
+    background:#020617;
+    display:flex;
+    justify-content:space-between;
+    gap:8px;
+    flex-wrap:wrap;
+  }
 
   /* payment modal */
-  #payModal { display:none; position:fixed; inset:0; background:rgba(15,23,42,0.92); backdrop-filter:blur(12px); align-items:center; justify-content:center; z-index:50; }
-  #payCard { width:100%; max-width:420px; margin:10px; padding:18px; background:#020617; border-radius:14px; border:1px solid #111827; box-shadow:0 18px 50px rgba(0,0,0,0.85); font-size:14px; }
+  #payModal {
+    display:none;
+    position:fixed;
+    inset:0;
+    background:rgba(15,23,42,0.92);
+    backdrop-filter:blur(12px);
+    align-items:center;
+    justify-content:center;
+    z-index:50;
+  }
+  #payCard {
+    width:100%;
+    max-width:420px;
+    margin:10px;
+    padding:18px;
+    background:#020617;
+    border-radius:14px;
+    border:1px solid #111827;
+    box-shadow:0 18px 50px rgba(0,0,0,0.85);
+    font-size:14px;
+  }
   #payCard h2 { margin:0 0 6px; font-size:18px; }
   #payPrice { margin:6px 0 6px; font-size:20px; font-weight:700; }
-
-  <!-- Add a "Pay with crypto" button near export controls -->
-<button id="cryptoPayBtn">Pay with Crypto</button>
-
-<!-- Crypto modal -->
-<div id="cryptoModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:60;">
-  <div style="background:#020617; padding:18px; border-radius:12px; max-width:520px; width:100%;">
-    <h3 style="margin:0 0 8px;">Pay with crypto</h3>
-    <p class="small">Send funds to one of the addresses below, then paste the transaction ID (tx hash) here. We'll notify the owner for verification. You must provide your email so we can send the download code after verification.</p>
-
-    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
-      <div style="flex:1;min-width:160px;">
-        <strong>Ethereum (ETH)</strong>
-        <div id="ethAddr" style="font-family:monospace;margin:6px 0;">0x96d069092c998bB6d75a4863a99D8c1101065915</div>
-        <canvas id="qrEth"></canvas>
-      </div>
-      <div style="flex:1;min-width:160px;">
-        <strong>Bitcoin (BTC)</strong>
-        <div id="btcAddr" style="font-family:monospace;margin:6px 0;">bc1qmtpvy09pytdxfs8ewcvzjvzcx3ktkjzdjytxhu</div>
-        <canvas id="qrBtc"></canvas>
-      </div>
-      <div style="flex:1;min-width:160px;">
-        <strong>Solana (SOL)</strong>
-        <div id="solAddr" style="font-family:monospace;margin:6px 0;">2Wnx3wpfJPrJAzYUfQGbT6m4yFMTBCz2qzP9ssTN92jV</div>
-        <canvas id="qrSol"></canvas>
-      </div>
-    </div>
-
-    <form id="cryptoForm" style="margin-top:12px;">
-      <label class="small">Your email (required)</label>
-      <input id="cryptoEmail" type="email" required style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px;">
-      <label class="small">Coin</label>
-      <select id="cryptoCoin" style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px;">
-        <option value="ETH">Ethereum (ETH)</option>
-        <option value="BTC">Bitcoin (BTC)</option>
-        <option value="SOL">Solana (SOL)</option>
-      </select>
-      <label class="small">Transaction ID (tx hash)</label>
-      <input id="cryptoTx" type="text" placeholder="Paste transaction hash here" style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px;">
-      <div style="display:flex;gap:8px;justify-content:flex-end;">
-        <button type="button" id="cryptoCancel">Cancel</button>
-        <button type="submit" class="primary">Submit payment info</button>
-      </div>
-    </form>
-
-    <p class="small" style="margin-top:10px;color:var(--text-muted);">After submission, we'll notify the owner (neandrthal@proton.me). Wait for approval email with a verification code or direct download link.</p>
-  </div>
-</div>
-
-  // Addresses — taken from your message
-const ETH_ADDRESS = '0x96d069092c998bB6d75a4863a99D8c1101065915';
-const BTC_ADDRESS = 'bc1qmtpvy09pytdxfs8ewcvzjvzcx3ktkjzdjytxhu';
-const SOL_ADDRESS = '2Wnx3wpfJPrJAzYUfQGbT6m4yFMTBCz2qzP9ssTN92jV';
-
-document.getElementById('cryptoPayBtn').addEventListener('click', () => {
-  document.getElementById('cryptoModal').style.display = 'flex';
-  // create QR codes (use QRious already present in your page)
-  new QRious({ element: document.getElementById('qrEth'), value: 'ethereum:' + ETH_ADDRESS, size: 180 });
-  new QRious({ element: document.getElementById('qrBtc'), value: 'bitcoin:' + BTC_ADDRESS, size: 180 });
-  new QRious({ element: document.getElementById('qrSol'), value: 'solana:' + SOL_ADDRESS, size: 180 });
-});
-
-document.getElementById('cryptoCancel').addEventListener('click', () => {
-  document.getElementById('cryptoModal').style.display = 'none';
-});
-
-// Submit form -> create pending order on server
-document.getElementById('cryptoForm').addEventListener('submit', async (ev) => {
-  ev.preventDefault();
-  const email = document.getElementById('cryptoEmail').value.trim();
-  const coin  = document.getElementById('cryptoCoin').value;
-  const tx    = document.getElementById('cryptoTx').value.trim();
-
-  if (!email || !tx) {
-    alert('Please enter your email and transaction ID.');
-    return;
-  }
-  const payload = {
-    email, coin, tx, project: canvas ? canvas.toJSON(['linkUrl','srcKey']) : null,
-    amountLabel: '20 USD (owner may accept any amount)', // document expected amount if you set a fixed price
-  };
-
-  const resp = await fetch('/api/crypto-purchase', {
-    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
-  });
-
-  const data = await resp.json();
-  if (resp.ok) {
-    alert('Payment info submitted. You will receive an email when the owner approves.');
-    document.getElementById('cryptoModal').style.display = 'none';
-  } else {
-    alert('Error: ' + (data?.message || 'Could not submit'));
-  }
-});
-  
-  /* small helpers */
-  .muted { color:var(--text-muted); font-size:13px; }
   .small { font-size:12px; color:var(--text-muted); }
 </style>
 </head>
@@ -219,335 +205,203 @@ document.getElementById('cryptoForm').addEventListener('submit', async (ev) => {
 <header>
   <div>
     <h1>Weeb · One‑Screen Site Maker</h1>
-    <p>Use your photo or free Pexels images, add text, links, QR, and export a hero image or a small static site in minutes.</p>
+    <p>Live preview on the left, simple controls on the right. Upload, type, tweak, export.</p>
   </div>
-  <div style="display:flex;flex-direction:column;gap:8px;align-items:flex-end;">
-    <div class="badge" id="statusBadge" aria-live="polite">Free editing · Unlock hi‑res via Stripe</div>
-    <div>
-      <button id="newProjectBtn">New</button>
-      <button id="saveProjectBtn" class="small">Save</button>
-      <button id="loadProjectBtn" class="small">Load</button>
-    </div>
-  </div>
+  <div class="badge" id="statusBadge">Free editing · Unlock hi‑res via Stripe</div>
 </header>
 
 <main>
   <!-- Left: canvas + Pexels -->
-  <section id="left" aria-label="Editor and background">
-    <div class="block" role="region" aria-label="Background controls">
+  <section id="left">
+    <div class="block">
       <div class="section-title">Background</div>
       <div class="row">
         <label for="bgUpload">Upload</label>
-        <input id="bgUpload" type="file" accept="image/*" aria-label="Upload background image">
+        <input id="bgUpload" type="file" accept="image/*">
         <button id="fitBg">Fit</button>
         <button id="clearAll">Reset</button>
       </div>
-
       <div class="row">
         <label for="pexelsQuery">Pexels</label>
-        <input id="pexelsQuery" type="text" placeholder="e.g. sunset, city, forest" aria-label="Pexels query">
+        <input id="pexelsQuery" type="text" placeholder="e.g. sunset, city, forest">
         <button id="pexelsSearch">Search</button>
       </div>
-      <div id="pexelsGrid" aria-live="polite"></div>
-      <div class="small" style="margin-top:6px;">
-        Note: In production, Pexels API requests must go through a server proxy to keep the API key secret.
-      </div>
+      <div id="pexelsGrid"></div>
     </div>
 
-    <div id="canvas-wrapper" role="region" aria-label="Editor canvas">
-      <canvas id="c" width="960" height="540" aria-label="Design canvas"></canvas>
+    <div id="canvas-wrapper">
+      <canvas id="c" width="960" height="540"></canvas>
     </div>
   </section>
 
   <!-- Right: tools -->
-  <section id="right" aria-label="Tools and export">
+  <section id="right">
     <!-- Text -->
-    <div class="block" role="region" aria-label="Text tools">
+    <div class="block">
       <div class="section-title">Text</div>
       <div class="row">
         <button id="addHeadline" class="primary">+ Headline</button>
         <button id="addSubline">+ Sub‑text</button>
         <button id="deleteSelected" class="danger">Delete</button>
       </div>
-
       <div class="row">
         <label for="fontSelect">Font</label>
-        <select id="fontSelect" aria-label="Select font">
+        <select id="fontSelect">
           <option value="system-ui">System</option>
           <option value="Arial">Arial</option>
           <option value="'DM Sans',system-ui">DM Sans</option>
           <option value="'Playfair Display',serif">Playfair</option>
         </select>
       </div>
-
       <div class="row">
         <label for="fontSize">Size</label>
-        <input id="fontSize" type="range" min="18" max="120" value="48" aria-label="Font size">
+        <input id="fontSize" type="range" min="18" max="120" value="48">
       </div>
-
       <div class="row">
         <label for="fontColor">Color</label>
-        <input id="fontColor" type="color" value="#ffffff" aria-label="Font color">
+        <input id="fontColor" type="color" value="#ffffff">
       </div>
-
       <div class="row">
         <label for="strokeColor">Outline</label>
-        <input id="strokeColor" type="color" value="#000000" style="flex:0 0 auto;width:58px;" aria-label="Outline color">
-        <input id="strokeWidth" type="range" min="0" max="8" value="0" aria-label="Outline width">
+        <input id="strokeColor" type="color" value="#000000" style="flex:0 0 auto;width:58px;">
+        <input id="strokeWidth" type="range" min="0" max="8" value="0">
       </div>
-
       <div class="row">
         <label for="textAlign">Align</label>
-        <select id="textAlign" aria-label="Text alignment">
+        <select id="textAlign">
           <option value="left">Left</option>
           <option value="center">Center</option>
           <option value="right">Right</option>
         </select>
       </div>
-
       <div class="row">
         <label for="lineHeight">Line</label>
-        <input id="lineHeight" type="range" min="0.9" max="2.4" step="0.05" value="1.15" aria-label="Line height">
+        <input id="lineHeight" type="range" min="0.9" max="2.4" step="0.05" value="1.15">
       </div>
-
       <div class="row">
         <label for="textContent">Text</label>
-        <input id="textContent" type="text" placeholder="Select a text box to edit" aria-label="Text content">
+        <input id="textContent" type="text" placeholder="Select a text box to edit">
       </div>
-
       <div class="row">
         <label for="linkUrl">Link</label>
-        <input id="linkUrl" type="text" placeholder="https://example.com (optional)" aria-label="Link URL">
-      </div>
-
-      <div class="row">
-        <label>Preview</label>
-        <button id="togglePreview">Toggle preview</button>
-        <span class="muted" id="previewNote">Links open only in Preview.</span>
+        <input id="linkUrl" type="text" placeholder="https://example.com (optional)">
       </div>
     </div>
 
     <!-- Extra images + QR -->
-    <div class="block" role="region" aria-label="Images and QR">
-      <div class="section-title">Extra images & QR</div>
+    <div class="block">
+      <div class="section-title">Images & QR</div>
       <div class="row">
         <label for="imgUpload">Add image</label>
-        <input id="imgUpload" type="file" accept="image/*" aria-label="Add image">
+        <input id="imgUpload" type="file" accept="image/*">
       </div>
       <div class="row">
         <label for="qrText">QR text</label>
-        <input id="qrText" type="text" placeholder="https://your-link.com" aria-label="QR text">
+        <input id="qrText" type="text" placeholder="https://your-link.com">
       </div>
       <div class="row">
         <button id="addQr" class="primary">+ QR code</button>
       </div>
     </div>
 
-    <!-- Export / Stripe -->
-    <div class="block" role="region" aria-label="Export and payment">
+    <!-- Export -->
+    <div class="block">
       <div class="section-title">Export</div>
       <p class="small" style="margin:0 0 8px;">
-        Download a low‑res preview for free. Unlock high‑resolution export and packaged ZIP via Stripe (server-side).
+        Download low‑res preview for free. Use Stripe to unlock high‑res PNG (2x) for your website.
       </p>
-
       <div class="row">
         <button id="previewBtn">Low‑res preview (free)</button>
         <button id="exportBtn" class="primary">High‑res via Stripe</button>
-      </div>
-
-      <div style="margin-top:8px;">
-        <button id="exportZipBtn" class="small">Download static ZIP (client-side demo)</button>
-        <div class="small muted" style="margin-top:6px;">ZIP contains index.html + image assets. For production, generate this server-side to include signed downloads.</div>
       </div>
     </div>
   </section>
 </main>
 
 <footer>
-  <span>Upload this folder to GitHub Pages / Cloudflare Pages / Netlify – it works as a static app.</span>
-  <span id="footerRight">
-    Made with Weeb
-  </span>
+  <span>Live preview is exactly what you see on the left. Export turns that into PNG.</span>
+  <span>Made with Weeb · Upload this folder to GitHub Pages / Cloudflare Pages / Netlify.</span>
 </footer>
 
-<!-- Payment modal (demo) -->
-<div id="payModal" role="dialog" aria-modal="true" aria-hidden="true">
+<!-- Payment modal -->
+<div id="payModal">
   <div id="payCard">
     <h2>Unlock high‑res export</h2>
-    <p class="small">One‑time payment via Stripe to download a 2× resolution PNG, no watermark.</p>
-    <div id="payPrice">5 EUR (demo)</div>
-
+    <p class="small">One‑time payment via Stripe to download a 2× resolution PNG without watermark.</p>
+    <div id="payPrice">5 EUR (test)</div>
+    <p class="small">Use Stripe test card 4242 4242 4242 4242 in test mode.</p>
     <p style="margin:8px 0;">
-      <!-- In production create Checkout session server-side and redirect to session.url -->
-      <a id="demoStripeLink" href="https://buy.stripe.com/test_cNi00cbf55gHasgcCHbEA00" target="_blank"
+      <a href="https://buy.stripe.com/test_cNi00cbf55gHasgcCHbEA00"
+         target="_blank"
          style="display:inline-block;padding:10px 20px;border-radius:999px;background:#6366f1;color:#fff;text-decoration:none;font-weight:600;">
-        Pay with Stripe (demo)
+        Pay with Stripe
       </a>
     </p>
-
-    <div style="display:flex;justify-content:space-between;align-items:center;">
-      <span class="small">Stripe test card: 4242 4242 4242 4242</span>
-      <div>
-        <button id="payClose">Close</button>
-      </div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;">
+      <span class="small">After payment, set ?paid=1 in URL or unlock manually for now.</span>
+      <button id="payClose">Close</button>
     </div>
   </div>
 </div>
 
 <script>
-/* ==========================
-   Setup + Globals
-   ========================== */
-const canvas = new fabric.Canvas('c', { preserveObjectStacking: true, selection: true });
-canvas.renderOnAddRemove = true;
-
-let bgObj = null;
+const canvas = new fabric.Canvas('c',{preserveObjectStacking:true});
+let bgImg = null;
 let active = null;
-let previewMode = false;
-let hiResUnlocked = false; // unlocked via server Stripe in production
+let hiResUnlocked = false;
 
-// history stacks for undo/redo (store JSON states)
-const undoStack = [];
-const redoStack = [];
-let isApplyingState = false;
-
-/* ==========================
-   High-DPI aware canvas resize
-   ========================== */
-function resizeCanvasToWrapper() {
+// resize canvas to wrapper
+function resizeCanvas(){
   const wrap = document.getElementById('canvas-wrapper');
   const rect = wrap.getBoundingClientRect();
-
-  const baseW = 960, baseH = 540; // design aspect for export
-  // compute scale to fill wrapper but preserve aspect
-  let w = rect.width - 16; // padding
-  let h = Math.min(rect.height - 16, (w * baseH) / baseW);
-  const dpr = Math.max(1, window.devicePixelRatio || 1);
-
-  // apply CSS size and backing store size
-  const canvasEl = canvas.getElement();
-  canvas.setWidth(baseW * (w / baseW));
-  canvas.setHeight(baseH * (h / baseH));
-
-  // scale objects to fit visual area (we keep logical units = baseW/baseH)
+  const ratio = canvas.width / canvas.height;
+  let w = rect.width - 16;
+  let h = w / ratio;
+  if (h > rect.height - 16) {
+    h = rect.height - 16;
+    w = h * ratio;
+  }
+  canvas.setWidth(w);
+  canvas.setHeight(h);
   canvas.calcOffset();
   canvas.requestRenderAll();
 }
-window.addEventListener('resize', resizeCanvasToWrapper);
-resizeCanvasToWrapper();
+window.addEventListener('resize',resizeCanvas);
+resizeCanvas();
 
-/* ==========================
-   Utility: push state for undo
-   ========================== */
-function pushState() {
-  if (isApplyingState) return;
-  try {
-    const json = canvas.toJSON(['linkUrl']);
-    undoStack.push(JSON.stringify(json));
-    // keep stack bounded
-    if (undoStack.length > 60) undoStack.shift();
-    // clear redo on new action
-    redoStack.length = 0;
-  } catch (e) { console.warn('pushState error', e); }
-}
-
-function undo() {
-  if (!undoStack.length) return;
-  const state = undoStack.pop();
-  redoStack.push(JSON.stringify(canvas.toJSON(['linkUrl'])));
-  isApplyingState = true;
-  canvas.loadFromJSON(state, () => { isApplyingState = false; canvas.renderAll(); });
-}
-
-function redo() {
-  if (!redoStack.length) return;
-  const state = redoStack.pop();
-  undoStack.push(JSON.stringify(canvas.toJSON(['linkUrl'])));
-  isApplyingState = true;
-  canvas.loadFromJSON(state, () => { isApplyingState = false; canvas.renderAll(); });
-}
-
-/* Listen to canvas modifications to push history */
-canvas.on('object:added', pushState);
-canvas.on('object:modified', pushState);
-canvas.on('object:removed', pushState);
-
-/* ==========================
-   Project autosave (localStorage demo)
-   ========================== */
-const AUTOSAVE_KEY = 'weeb-autosave-v1';
-let autosaveTimer = null;
-function autosave() {
-  try {
-    const json = canvas.toJSON(['linkUrl']);
-    localStorage.setItem(AUTOSAVE_KEY, JSON.stringify({
-      createdAt: new Date().toISOString(),
-      canvas: json
-    }));
-    document.getElementById('statusBadge').textContent = 'Saved locally';
-  } catch(e) { console.warn('autosave error', e); }
-}
-
-function loadAutosave() {
-  const raw = localStorage.getItem(AUTOSAVE_KEY);
-  if (!raw) return false;
-  try {
-    const parsed = JSON.parse(raw);
-    canvas.loadFromJSON(parsed.canvas, () => { canvas.renderAll(); fitBackground(); });
-    document.getElementById('statusBadge').textContent = 'Loaded autosave';
-    return true;
-  } catch(e) { console.warn('loadAutosave', e); return false; }
-}
-setInterval(autosave, 5000); // every 5s
-
-/* ==========================
-   Background upload (FileReader to avoid CORS taint)
-   ========================== */
-document.getElementById('bgUpload').addEventListener('change', async (ev) => {
-  const f = ev.target.files && ev.target.files[0];
-  if (!f) return;
-  const dataUrl = await readFileAsDataURL(f);
-  fabric.Image.fromURL(dataUrl, img => {
-    bgObj = img;
+/* background upload */
+document.getElementById('bgUpload').onchange = e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const url = URL.createObjectURL(file);
+  fabric.Image.fromURL(url,img=>{
+    bgImg = img;
     fitBackground();
-    pushState();
-  }, { crossOrigin: 'anonymous' });
-});
-
-function readFileAsDataURL(file) {
-  return new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onload = () => resolve(fr.result);
-    fr.onerror = reject;
-    fr.readAsDataURL(file);
-  });
-}
-
-function fitBackground() {
-  if (!bgObj) return;
+  },{crossOrigin:'anonymous'});
+};
+function fitBackground(){
+  if (!bgImg) return;
   const cw = canvas.getWidth(), ch = canvas.getHeight();
-  const scale = Math.max(cw / bgObj.width, ch / bgObj.height);
-  bgObj.set({ scaleX: scale, scaleY: scale, left: 0, top: 0, selectable: false, evented: false, originX: 'left', originY: 'top' });
-  if (!canvas.getObjects().includes(bgObj)) canvas.insertAt(bgObj, 0);
-  canvas.sendToBack(bgObj);
+  const scale = Math.max(cw/bgImg.width, ch/bgImg.height);
+  bgImg.scale(scale);
+  bgImg.set({ left:(cw-bgImg.width*scale)/2, top:(ch-bgImg.height*scale)/2, selectable:false, evented:false });
+  if (!canvas.getObjects().includes(bgImg)) canvas.add(bgImg);
+  canvas.sendToBack(bgImg);
   canvas.requestRenderAll();
 }
+document.getElementById('fitBg').onclick = fitBackground;
+document.getElementById('clearAll').onclick = () => {
+  if (!confirm('Clear everything?')) return;
+  canvas.clear();
+  bgImg = null;
+};
 
-/* Reset */
-document.getElementById('clearAll').addEventListener('click', () => {
-  if (!confirm('Clear canvas? This removes all objects.')) return;
-  canvas.clear(); bgObj = null;
-  pushState();
-});
-
-/* ==========================
-   Text tools
-   ========================== */
-function applyTextPropsTo(obj) {
-  if (!obj || obj.type !== 'textbox') return;
+/* text helpers */
+function applyTextProps(obj){
+  if (!obj || obj.type!=='textbox') return;
   obj.set({
     fontFamily: document.getElementById('fontSelect').value,
-    fontSize: parseInt(document.getElementById('fontSize').value, 10),
+    fontSize: parseInt(document.getElementById('fontSize').value,10),
     fill: document.getElementById('fontColor').value,
     stroke: document.getElementById('strokeColor').value,
     strokeWidth: parseFloat(document.getElementById('strokeWidth').value),
@@ -556,430 +410,185 @@ function applyTextPropsTo(obj) {
   });
   canvas.requestRenderAll();
 }
-
-function addTextbox(text, size, weight) {
-  const tb = new fabric.Textbox(text, {
-    left: canvas.getWidth() * 0.1,
-    top: canvas.getHeight() * 0.15,
-    width: canvas.getWidth() * 0.8,
-    fontWeight: weight || '700',
-    fill: '#ffffff',
-    shadow: new fabric.Shadow({ color: 'rgba(0,0,0,0.6)', blur: 12, offsetX: 0, offsetY: 6 })
+function addTextbox(text,size,weight){
+  const tb = new fabric.Textbox(text,{
+    left:canvas.getWidth()*0.1,
+    top:canvas.getHeight()*0.15,
+    width:canvas.getWidth()*0.8,
+    fontWeight:weight||'700',
+    fill:'#ffffff',
+    shadow:new fabric.Shadow({color:'rgba(0,0,0,0.6)',blur:12,offsetX:0,offsetY:6})
   });
   document.getElementById('fontSize').value = size;
-  applyTextPropsTo(tb);
+  applyTextProps(tb);
   canvas.add(tb);
   canvas.setActiveObject(tb);
   tb.enterEditing();
   canvas.requestRenderAll();
-  pushState();
 }
-
-document.getElementById('addHeadline').addEventListener('click', () => addTextbox('One line that explains what you do.', 52, '800'));
-document.getElementById('addSubline').addEventListener('click', () => addTextbox('Optional sub‑text with a call to action.', 24, '400'));
+document.getElementById('addHeadline').onclick=()=>addTextbox('One line that explains what you do.',52,'800');
+document.getElementById('addSubline').onclick=()=>addTextbox('Optional sub‑text with a call to action.',24,'400');
 
 ['fontSelect','fontSize','fontColor','strokeColor','strokeWidth','textAlign','lineHeight']
-.forEach(id => {
-  document.getElementById(id).addEventListener('input', () => {
+.forEach(id=>{
+  document.getElementById(id).addEventListener('input',()=>{
     const o = canvas.getActiveObject();
-    if (!o || o.type !== 'textbox') return;
-    applyTextPropsTo(o); pushState();
+    if (!o || o.type!=='textbox') return;
+    applyTextProps(o);
   });
 });
 
-function syncTextToControls() {
-  const input = document.getElementById('textContent');
-  if (active && active.type === 'textbox') {
-    input.value = active.text;
-    document.getElementById('fontSize').value = active.fontSize || 32;
+/* sync selection -> controls */
+function syncControls(){
+  const txt = document.getElementById('textContent');
+  const link = document.getElementById('linkUrl');
+  if (active && active.type==='textbox'){
+    txt.value = active.text || '';
+    link.value = active.linkUrl || '';
+    document.getElementById('fontSize').value = active.fontSize || 48;
     document.getElementById('fontColor').value = active.fill || '#ffffff';
   } else {
-    input.value = '';
+    txt.value = '';
+    link.value = '';
   }
 }
+canvas.on('selection:created',e=>{active=e.target;syncControls();});
+canvas.on('selection:updated',e=>{active=e.target;syncControls();});
+canvas.on('selection:cleared',()=>{active=null;syncControls();});
 
-function syncLinkToControls() {
-  const input = document.getElementById('linkUrl');
-  if (active && active.type === 'textbox' && active.linkUrl) input.value = active.linkUrl;
-  else input.value = '';
-}
-
-canvas.on('selection:created', e => { active = e.target; syncTextToControls(); syncLinkToControls(); });
-canvas.on('selection:updated', e => { active = e.target; syncTextToControls(); syncLinkToControls(); });
-canvas.on('selection:cleared', () => { active = null; syncTextToControls(); syncLinkToControls(); });
-
-document.getElementById('textContent').addEventListener('input', e => {
-  if (!active || active.type !== 'textbox') return;
+/* text input live */
+document.getElementById('textContent').addEventListener('input',e=>{
+  if (!active || active.type!=='textbox') return;
   active.text = e.target.value;
   canvas.requestRenderAll();
-  pushState();
 });
 
-document.getElementById('linkUrl').addEventListener('change', e => {
-  if (!active || active.type !== 'textbox') return;
+/* link url */
+document.getElementById('linkUrl').addEventListener('change',e=>{
+  if (!active || active.type!=='textbox') return;
   const v = e.target.value.trim();
-  active.linkUrl = v ? v : null;
-  pushState();
+  active.linkUrl = v || null;
 });
 
-/* Make text clickable only in preview mode */
-canvas.on('mouse:down', opt => {
+/* clickable in canvas (always live preview) */
+canvas.on('mouse:down',opt=>{
   const t = opt.target;
-  if (t && t.type === 'textbox' && t.linkUrl && previewMode) {
+  if (t && t.type==='textbox' && t.linkUrl){
     const url = t.linkUrl;
-    try { if (!/^https?:\/\//i.test(url)) { window.open('http://' + url, '_blank'); } else window.open(url, '_blank'); } catch (e) {}
+    if (!url) return;
+    const finalUrl = /^https?:///i.test(url) ? url : 'http://' + url;
+    window.open(finalUrl,'_blank');
   }
 });
 
-/* Delete */
-document.getElementById('deleteSelected').addEventListener('click', () => {
+/* delete */
+document.getElementById('deleteSelected').onclick=()=>{
   const o = canvas.getActiveObject();
-  if (o) { canvas.remove(o); canvas.requestRenderAll(); pushState(); }
-});
+  if (o){canvas.remove(o);canvas.requestRenderAll();}
+};
 
-/* ==========================
-   Image uploads (extra images)
-   ========================== */
-document.getElementById('imgUpload').addEventListener('change', async ev => {
-  const f = ev.target.files && ev.target.files[0];
-  if (!f) return;
-  const dataUrl = await readFileAsDataURL(f);
-  fabric.Image.fromURL(dataUrl, img => {
-    const scale = (canvas.getWidth() * 0.25) / img.width;
-    img.set({ left: canvas.getWidth() * 0.1, top: canvas.getHeight() * 0.6 });
+/* extra images */
+document.getElementById('imgUpload').onchange=e=>{
+  const file=e.target.files[0];
+  if(!file)return;
+  const url=URL.createObjectURL(file);
+  fabric.Image.fromURL(url,img=>{
+    const scale=(canvas.getWidth()*0.25)/img.width;
     img.scale(scale);
+    img.set({left:canvas.getWidth()*0.1,top:canvas.getHeight()*0.6});
     canvas.add(img);
     canvas.setActiveObject(img);
     canvas.requestRenderAll();
-    pushState();
-  }, { crossOrigin: 'anonymous' });
-});
+  },{crossOrigin:'anonymous'});
+};
 
-/* ==========================
-   QR code insertion
-   ========================== */
-document.getElementById('addQr').addEventListener('click', () => {
-  const text = document.getElementById('qrText').value.trim();
-  if (!text) { alert('Enter text or URL for QR.'); return; }
-  const qr = new QRious({ value: text, size: 512, level: 'H' });
-  const dataUrl = qr.toDataURL('image/png');
-  fabric.Image.fromURL(dataUrl, img => {
-    const scale = (canvas.getWidth() * 0.18) / img.width;
-    img.set({ left: canvas.getWidth() * 0.7, top: canvas.getHeight() * 0.6 });
+/* QR code */
+document.getElementById('addQr').onclick=()=>{
+  const text=document.getElementById('qrText').value.trim();
+  if(!text){alert('Enter text or URL for QR.');return;}
+  const qr=new QRious({value:text,size:256,level:'H'});
+  const dataUrl=qr.toDataURL('image/png');
+  fabric.Image.fromURL(dataUrl,img=>{
+    const scale=(canvas.getWidth()*0.18)/img.width;
     img.scale(scale);
+    img.set({left:canvas.getWidth()*0.7,top:canvas.getHeight()*0.6});
     canvas.add(img);
     canvas.setActiveObject(img);
     canvas.requestRenderAll();
-    pushState();
-  }, { crossOrigin: 'anonymous' });
-});
+  },{crossOrigin:'anonymous'});
+};
 
-/* ==========================
-   Pexels search (demo: client-side proxy recommended)
-   ========================== */
-const PEXELS_PROXY = '/api/pexels?query='; // In production, implement server route that proxies to Pexels using your key.
-
-async function fetchPexelsPhotos(query) {
-  const grid = document.getElementById('pexelsGrid');
-  grid.innerHTML = '<div class="small muted">Searching Pexels…</div>';
-  try {
-    // PRODUCTION: call server-side endpoint that includes PEXELS_KEY and hides it from client.
-    const res = await fetch(PEXELS_PROXY + encodeURIComponent(query));
-    if (!res.ok) throw new Error('Pexels error');
-    const data = await res.json();
-    return data.photos || [];
-  } catch (e) {
+/* Pexels (placeholder: use backend proxy later) */
+const PEXELS_PROXY='/api/pexels?query=';
+async function fetchPexelsPhotos(query){
+  const grid=document.getElementById('pexelsGrid');
+  grid.innerHTML='<span class="small">Searching Pexels…</span>';
+  try{
+    const res=await fetch(PEXELS_PROXY+encodeURIComponent(query));
+    if(!res.ok)throw new Error('Pexels error');
+    const data=await res.json();
+    return data.photos||[];
+  }catch(e){
     console.error(e);
-    grid.innerHTML = '<div class="small" style="color:#f97373;">Pexels request failed.</div>';
-    return [];
+    grid.innerHTML='<span class="small" style="color:#f97373;">Pexels request failed.</span>';
+    return[];
   }
 }
-
-document.getElementById('pexelsSearch').addEventListener('click', async () => {
-  const query = (document.getElementById('pexelsQuery').value || 'landscape').trim();
-  const grid = document.getElementById('pexelsGrid');
-  const photos = await fetchPexelsPhotos(query);
-  if (!photos.length) { grid.innerHTML = '<div class="small muted">No results.</div>'; return; }
-  grid.innerHTML = '';
-  photos.forEach(photo => {
-    const thumb = photo.src.small || photo.src.medium || photo.src.original;
-    const full  = photo.src.large2x || photo.src.large || photo.src.original;
-    const imgEl = document.createElement('img');
-    imgEl.src = thumb;
-    imgEl.title = `By ${photo.photographer}`;
-    imgEl.alt = photo.photographer;
-    imgEl.onclick = async () => {
-      // Load selected image as data URL using fetch -> blob -> dataURL to avoid crossOrigin issues.
-      try {
-        const fetchRes = await fetch(full);
-        const blob = await fetchRes.blob();
-        const dataUrl = await blobToDataURL(blob);
-        fabric.Image.fromURL(dataUrl, img => {
-          bgObj = img;
-          fitBackground();
-          pushState();
-        }, { crossOrigin: 'anonymous' });
-      } catch (e) {
-        console.error('Pexels image load failed', e);
-        alert('Could not load image. In production images should be proxied server-side.');
-      }
+document.getElementById('pexelsSearch').onclick=async()=>{
+  const q=(document.getElementById('pexelsQuery').value||'landscape').trim();
+  const grid=document.getElementById('pexelsGrid');
+  const photos=await fetchPexelsPhotos(q);
+  if(!photos.length){grid.innerHTML='<span class="small">No results.</span>';return;}
+  grid.innerHTML='';
+  photos.forEach(photo=>{
+    const thumb=photo.src.small||photo.src.medium||photo.src.original;
+    const full =photo.src.large2x||photo.src.large||photo.src.original;
+    const imgEl=document.createElement('img');
+    imgEl.src=thumb;
+    imgEl.title=`By ${photo.photographer}`;
+    imgEl.onclick=()=>{
+      fabric.Image.fromURL(full,img=>{
+        bgImg=img;
+        fitBackground();
+      },{crossOrigin:'anonymous'});
     };
     grid.appendChild(imgEl);
   });
-});
+};
 
-function blobToDataURL(blob) {
-  return new Promise((resolve, reject) => {
-    const fr = new FileReader();
-    fr.onload = () => resolve(fr.result);
-    fr.onerror = reject;
-    fr.readAsDataURL(blob);
-  });
-}
-
-/* ==========================
-   Exports: PNG & client-side ZIP
-   ========================== */
-function exportImage(multiplier = 1) {
-  // multiplier - for hi-res multiply by 2 or 3
-  if (!bgObj && canvas.getObjects().length === 0) { alert('Add a background and content first.'); return; }
-  const dataUrl = canvas.toDataURL({ format: 'png', multiplier });
-  const a = document.createElement('a');
-  a.href = dataUrl;
-  a.download = 'weeb-site.png';
+/* export png */
+function exportImage(mult){
+  if(!bgImg && canvas.getObjects().length===0){
+    alert('Add a background and content first.');
+    return;
+  }
+  const url=canvas.toDataURL({format:'png',multiplier:mult||1});
+  const a=document.createElement('a');
+  a.href=url;
+  a.download='weeb-site.png';
   a.click();
 }
-document.getElementById('previewBtn').addEventListener('click', () => exportImage(0.8));
+document.getElementById('previewBtn').onclick=()=>exportImage(0.8);
 
-document.getElementById('exportBtn').addEventListener('click', () => {
-  // In production: create Stripe Checkout session server-side and redirect to session.url.
-  // For demo show modal
-  document.getElementById('payModal').style.display = 'flex';
-  document.getElementById('payModal').setAttribute('aria-hidden', 'false');
-});
-
-/* Close pay modal */
-document.getElementById('payClose').addEventListener('click', () => {
-  document.getElementById('payModal').style.display = 'none';
-  document.getElementById('payModal').setAttribute('aria-hidden', 'true');
-});
-
-/* Client-side ZIP generation demo - best-effort */
-async function generateStaticIndexHtml(projectJson, assetsMap) {
-  // projectJson is the canvas.toJSON() representation
-  // assetsMap: { 'assets/img1.png': dataUrl, ... }
-  // This generates a simple absolute-positioned page; responsive logic can be improved server-side.
-  const baseW = 960, baseH = 540;
-  const style = `
-  html,body{height:100%;margin:0}
-  .stage{position:relative;width:100%;max-width:1200px;margin:0 auto;background:#000;overflow:hidden}
-  .stage-inner{position:relative;padding-top:${(baseH/baseW)*100}%;} 
-  .abs{position:absolute;left:0;top:0}
-  `;
-  // create HTML nodes from object list
-  const objects = projectJson.objects || [];
-  let bodyHtml = '';
-  for (const o of objects) {
-    if (o.type === 'image') {
-      const left = o.left || 0, top = o.top || 0, w = (o.width||0) * (o.scaleX||1), h = (o.height||0) * (o.scaleY||1);
-      const percentLeft = (left / baseW) * 100;
-      const percentTop = (top / baseH) * 100;
-      const percentW = (w / baseW) * 100;
-      const percentH = (h / baseH) * 100;
-      const srcKey = o.srcKey || '';
-      const src = assetsMap[srcKey] || '';
-      bodyHtml += `<img src="${src}" class="abs" style="left:${percentLeft}%;top:${percentTop}%;width:${percentW}%;height:${percentH}%;object-fit:cover;" alt="">`;
-    } else if (o.type === 'textbox') {
-      const left = o.left || 0, top = o.top || 0, width = o.width || 400;
-      const percentLeft = (left / baseW) * 100;
-      const percentTop = (top / baseH) * 100;
-      const percentW = (width / baseW) * 100;
-      const styleInline = `color:${o.fill||'#fff'};font-size:${(o.fontSize||32)}px;font-family:${o.fontFamily||'system-ui'};text-align:${o.textAlign||'left'};line-height:${o.lineHeight||1.2};`;
-      const inner = (o.text || '').replace(/\n/g, '<br>');
-      if (o.linkUrl) {
-        bodyHtml += `<a href="${o.linkUrl}" class="abs" style="left:${percentLeft}%;top:${percentTop}%;width:${percentW}%;${styleInline}">${inner}</a>`;
-      } else {
-        bodyHtml += `<div class="abs" style="left:${percentLeft}%;top:${percentTop}%;width:${percentW}%;${styleInline}">${inner}</div>`;
-      }
-    }
+/* Stripe modal */
+document.getElementById('exportBtn').onclick=()=>{
+  if(hiResUnlocked){
+    exportImage(2.0);
+  }else{
+    document.getElementById('payModal').style.display='flex';
+    document.getElementById('statusBadge').textContent='Stripe payment (demo) opened';
   }
+};
+document.getElementById('payClose').onclick=()=>{
+  document.getElementById('payModal').style.display='none';
+};
 
-  // background handling (we assume first object may be background)
-  let bgCss = '';
-  const first = objects[0];
-  if (first && first.type === 'image' && first.srcKey) {
-    const bg = assetsMap[first.srcKey] || '';
-    bgCss = `background-image:url("${bg}"); background-size:cover; background-position:center;`;
-    // if background used, we may not want separate img tag; but keep simple for demo
-  }
-
-  const html = `<!doctype html>
-<html>
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Weeb export</title>
-<style>${style}</style>
-</head>
-<body>
-<div class="stage" style="${bgCss}">
-  <div class="stage-inner">
-    ${bodyHtml}
-  </div>
-</div>
-</body>
-</html>`;
-  return html;
+/* simple unlock via ?paid=1 for now */
+const params=new URLSearchParams(window.location.search);
+if(params.get('paid')==='1'){
+  hiResUnlocked=true;
+  document.getElementById('statusBadge').textContent='Hi‑res unlocked (demo)';
 }
-
-async function collectAssetsFromCanvas() {
-  // Walk canvas objects and collect image data URLs -> return map key->dataURL
-  const objects = canvas.getObjects();
-  const assets = {};
-  let idx = 0;
-  for (const o of objects) {
-    if (o.type === 'image') {
-      // prefer dataURL if source is dataurl or object has toDataURL
-      try {
-        // Try using the original element src if it's a data URL stored
-        const src = o._element && o._element.src;
-        if (src && src.startsWith('data:')) {
-          const key = `assets/img-${++idx}.png`;
-          assets[key] = src;
-          // set srcKey in object's serialized form so export can map
-          o.set('srcKey', key);
-        } else {
-          // try to get dataURL from toDataURL cropping object area
-          const dataUrl = o.toDataURL({ format: 'png', multiplier: 1 });
-          const key = `assets/img-${++idx}.png`;
-          assets[key] = dataUrl;
-          o.set('srcKey', key);
-        }
-      } catch (e) {
-        console.warn('asset collect failed', e);
-      }
-    }
-  }
-  // also add background if present
-  if (bgObj) {
-    try {
-      const b64 = bgObj.toDataURL({ format: 'png' });
-      const key = `assets/bg.png`;
-      assets[key] = b64;
-      if (canvas.getObjects().length && canvas.getObjects()[0] === bgObj) {
-        bgObj.set('srcKey', key);
-      }
-    } catch (e) { console.warn('bg toDataURL failed', e); }
-  }
-  return assets;
-}
-
-/* Create ZIP and download (client-side demo) */
-document.getElementById('exportZipBtn').addEventListener('click', async () => {
-  try {
-    document.getElementById('statusBadge').textContent = 'Preparing ZIP...';
-    const projectJson = canvas.toJSON(['linkUrl', 'srcKey']);
-    const assets = await collectAssetsFromCanvas();
-    // Build index.html based on serialized project and assets
-    const indexHtml = await generateStaticIndexHtml(projectJson, assets);
-    const zip = new JSZip();
-    zip.file('index.html', indexHtml);
-    // Add assets as blobs
-    for (const [path, dataUrl] of Object.entries(assets)) {
-      const blob = dataURLToBlob(dataUrl);
-      zip.file(path, blob);
-    }
-    const content = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE' });
-    saveAs(content, 'weeb-export.zip');
-    document.getElementById('statusBadge').textContent = 'ZIP ready';
-  } catch (e) {
-    console.error('ZIP export error', e);
-    alert('Could not create ZIP here. For production, generate server-side.');
-    document.getElementById('statusBadge').textContent = 'ZIP failed';
-  }
-});
-
-function dataURLToBlob(dataurl) {
-  const parts = dataurl.split(',');
-  const mime = parts[0].match(/:(.*?);/)[1];
-  const bstr = atob(parts[1]);
-  let n = bstr.length;
-  const u8arr = new Uint8Array(n);
-  while (n--) u8arr[n] = bstr.charCodeAt(n);
-  return new Blob([u8arr], { type: mime });
-}
-
-/* ==========================
-   Project Save / Load (local)
-   ========================== */
-document.getElementById('saveProjectBtn').addEventListener('click', () => {
-  const json = canvas.toJSON(['linkUrl', 'srcKey']);
-  const blob = new Blob([JSON.stringify(json)], { type: 'application/json' });
-  saveAs(blob, 'weeb-project.json');
-});
-
-document.getElementById('loadProjectBtn').addEventListener('click', () => {
-  const input = document.createElement('input');
-  input.type = 'file';
-  input.accept = 'application/json';
-  input.onchange = async (e) => {
-    const f = e.target.files[0];
-    if (!f) return;
-    const text = await f.text();
-    canvas.loadFromJSON(text, () => { canvas.renderAll(); fitBackground(); pushState(); });
-  };
-  input.click();
-});
-
-/* ==========================
-   Keyboard shortcuts
-   ========================== */
-window.addEventListener('keydown', (ev) => {
-  const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
-  const ctrl = isMac ? ev.metaKey : ev.ctrlKey;
-  if (ctrl && ev.key.toLowerCase() === 'z') { ev.preventDefault(); undo(); }
-  if (ctrl && (ev.key.toLowerCase() === 'y' || (ev.shiftKey && ev.key.toLowerCase() === 'z'))) { ev.preventDefault(); redo(); }
-  if (ev.key === 'Delete' || ev.key === 'Backspace') {
-    const o = canvas.getActiveObject();
-    if (o) { canvas.remove(o); pushState(); }
-  }
-});
-
-/* ==========================
-   Preview toggle
-   ========================== */
-document.getElementById('togglePreview').addEventListener('click', () => {
-  previewMode = !previewMode;
-  document.getElementById('previewNote').textContent = previewMode ? 'Preview ON: links open' : 'Preview OFF: editing mode';
-  // disable selection in preview
-  canvas.selection = !previewMode;
-  canvas.forEachObject(o => o.selectable = !previewMode);
-  canvas.discardActiveObject();
-  canvas.requestRenderAll();
-});
-
-/* ==========================
-   Load autosave at start
-   ========================== */
-if (!loadAutosave()) {
-  // initial sample content
-  addTextbox('Welcome to Weeb — edit me!', 46, '700');
-  pushState();
-}
-
-/* Helpers */
-function saveCanvasStateToLocal() { localStorage.setItem('weeb-last', JSON.stringify(canvas.toJSON(['linkUrl','srcKey']))); }
-window.addEventListener('beforeunload', saveCanvasStateToLocal);
-
-/* ==========================
-   Small UX helpers: new project, status
-   ========================== */
-document.getElementById('newProjectBtn').addEventListener('click', () => {
-  if (!confirm('Create new project? Unsaved changes will be lost.')) return;
-  canvas.clear(); bgObj = null;
-  addTextbox('One line that explains what you do.', 52, '800');
-  pushState();
-});
 </script>
 </body>
 </html>
