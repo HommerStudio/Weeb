@@ -116,6 +116,100 @@
   #payCard h2 { margin:0 0 6px; font-size:18px; }
   #payPrice { margin:6px 0 6px; font-size:20px; font-weight:700; }
 
+  <!-- Add a "Pay with crypto" button near export controls -->
+<button id="cryptoPayBtn">Pay with Crypto</button>
+
+<!-- Crypto modal -->
+<div id="cryptoModal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); align-items:center; justify-content:center; z-index:60;">
+  <div style="background:#020617; padding:18px; border-radius:12px; max-width:520px; width:100%;">
+    <h3 style="margin:0 0 8px;">Pay with crypto</h3>
+    <p class="small">Send funds to one of the addresses below, then paste the transaction ID (tx hash) here. We'll notify the owner for verification. You must provide your email so we can send the download code after verification.</p>
+
+    <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px;">
+      <div style="flex:1;min-width:160px;">
+        <strong>Ethereum (ETH)</strong>
+        <div id="ethAddr" style="font-family:monospace;margin:6px 0;">0x96d069092c998bB6d75a4863a99D8c1101065915</div>
+        <canvas id="qrEth"></canvas>
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <strong>Bitcoin (BTC)</strong>
+        <div id="btcAddr" style="font-family:monospace;margin:6px 0;">bc1qmtpvy09pytdxfs8ewcvzjvzcx3ktkjzdjytxhu</div>
+        <canvas id="qrBtc"></canvas>
+      </div>
+      <div style="flex:1;min-width:160px;">
+        <strong>Solana (SOL)</strong>
+        <div id="solAddr" style="font-family:monospace;margin:6px 0;">2Wnx3wpfJPrJAzYUfQGbT6m4yFMTBCz2qzP9ssTN92jV</div>
+        <canvas id="qrSol"></canvas>
+      </div>
+    </div>
+
+    <form id="cryptoForm" style="margin-top:12px;">
+      <label class="small">Your email (required)</label>
+      <input id="cryptoEmail" type="email" required style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px;">
+      <label class="small">Coin</label>
+      <select id="cryptoCoin" style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px;">
+        <option value="ETH">Ethereum (ETH)</option>
+        <option value="BTC">Bitcoin (BTC)</option>
+        <option value="SOL">Solana (SOL)</option>
+      </select>
+      <label class="small">Transaction ID (tx hash)</label>
+      <input id="cryptoTx" type="text" placeholder="Paste transaction hash here" style="width:100%;padding:8px;border-radius:8px;margin-bottom:8px;">
+      <div style="display:flex;gap:8px;justify-content:flex-end;">
+        <button type="button" id="cryptoCancel">Cancel</button>
+        <button type="submit" class="primary">Submit payment info</button>
+      </div>
+    </form>
+
+    <p class="small" style="margin-top:10px;color:var(--text-muted);">After submission, we'll notify the owner (neandrthal@proton.me). Wait for approval email with a verification code or direct download link.</p>
+  </div>
+</div>
+
+  // Addresses — taken from your message
+const ETH_ADDRESS = '0x96d069092c998bB6d75a4863a99D8c1101065915';
+const BTC_ADDRESS = 'bc1qmtpvy09pytdxfs8ewcvzjvzcx3ktkjzdjytxhu';
+const SOL_ADDRESS = '2Wnx3wpfJPrJAzYUfQGbT6m4yFMTBCz2qzP9ssTN92jV';
+
+document.getElementById('cryptoPayBtn').addEventListener('click', () => {
+  document.getElementById('cryptoModal').style.display = 'flex';
+  // create QR codes (use QRious already present in your page)
+  new QRious({ element: document.getElementById('qrEth'), value: 'ethereum:' + ETH_ADDRESS, size: 180 });
+  new QRious({ element: document.getElementById('qrBtc'), value: 'bitcoin:' + BTC_ADDRESS, size: 180 });
+  new QRious({ element: document.getElementById('qrSol'), value: 'solana:' + SOL_ADDRESS, size: 180 });
+});
+
+document.getElementById('cryptoCancel').addEventListener('click', () => {
+  document.getElementById('cryptoModal').style.display = 'none';
+});
+
+// Submit form -> create pending order on server
+document.getElementById('cryptoForm').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const email = document.getElementById('cryptoEmail').value.trim();
+  const coin  = document.getElementById('cryptoCoin').value;
+  const tx    = document.getElementById('cryptoTx').value.trim();
+
+  if (!email || !tx) {
+    alert('Please enter your email and transaction ID.');
+    return;
+  }
+  const payload = {
+    email, coin, tx, project: canvas ? canvas.toJSON(['linkUrl','srcKey']) : null,
+    amountLabel: '20 USD (owner may accept any amount)', // document expected amount if you set a fixed price
+  };
+
+  const resp = await fetch('/api/crypto-purchase', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+  });
+
+  const data = await resp.json();
+  if (resp.ok) {
+    alert('Payment info submitted. You will receive an email when the owner approves.');
+    document.getElementById('cryptoModal').style.display = 'none';
+  } else {
+    alert('Error: ' + (data?.message || 'Could not submit'));
+  }
+});
+  
   /* small helpers */
   .muted { color:var(--text-muted); font-size:13px; }
   .small { font-size:12px; color:var(--text-muted); }
